@@ -23,6 +23,7 @@ import androidx.compose.foundation.text2.input.TextFieldLineLimits
 import androidx.compose.foundation.text2.input.TextFieldState
 import androidx.compose.foundation.text2.input.TextObfuscationMode
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -62,7 +63,6 @@ fun RuniquePasswordTextField(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             title?.let {
@@ -119,14 +119,14 @@ fun RuniquePasswordTextField(
                         }
                         innerBox()
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Icon(
-                        imageVector = if (isPasswordVisible) EyeOpenedIcon else EyeClosedIcon,
-                        contentDescription = if (isPasswordVisible) stringResource(id = R.string.hide_password)
-                                             else stringResource(id = R.string.show_password),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(onClick = { onTogglePasswordVisibility() }) {
+                        Icon(
+                            imageVector = if (isPasswordVisible) EyeOpenedIcon else EyeClosedIcon,
+                            contentDescription = if (isPasswordVisible) stringResource(id = R.string.hide_password)
+                            else stringResource(id = R.string.show_password),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         )

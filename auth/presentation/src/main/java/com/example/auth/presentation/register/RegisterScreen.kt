@@ -2,6 +2,7 @@
 
 package com.example.auth.presentation.register
 
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -41,6 +44,7 @@ import com.example.core.presentation.designsystem.components.GradientBackground
 import com.example.core.presentation.designsystem.components.RuniqueActionButton
 import com.example.core.presentation.designsystem.components.RuniquePasswordTextField
 import com.example.core.presentation.designsystem.components.RuniqueTextField
+import com.example.core.presentation.ui.ObserveAsEvents
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -49,6 +53,21 @@ fun RegisterScreenRoot(
     onSignInClick: () -> Unit,
     onSuccessfulRegistration: () -> Unit
 ) {
+    val context = LocalContext.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    ObserveAsEvents(flow = viewModel.eventsFlow) { event ->
+        when (event) {
+            is RegisterEvent.RegistrationError -> {
+                keyboardController?.hide()
+                Toast.makeText(context, event.error.asString(context), Toast.LENGTH_LONG).show()
+            }
+            RegisterEvent.RegistrationSuccess -> {
+                keyboardController?.hide()
+                Toast.makeText(context, R.string.registration_successful, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     RegisterScreen(
         state = viewModel.state,
         onAction = viewModel::onAction

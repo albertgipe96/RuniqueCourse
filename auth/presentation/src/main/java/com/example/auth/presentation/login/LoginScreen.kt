@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -81,8 +82,8 @@ private fun LoginScreen(
     GradientBackground {
         Column(
             modifier = Modifier
-                .verticalScroll(rememberScrollState())
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 32.dp)
                 .padding(top = 16.dp)
         ) {
@@ -101,6 +102,7 @@ private fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 state = state.email,
                 startIcon = EmailIcon,
+                keyboardType = KeyboardType.Email,
                 hint = stringResource(id = R.string.example_email),
                 title = stringResource(id = R.string.email)
             )
@@ -117,7 +119,7 @@ private fun LoginScreen(
             RuniqueActionButton(
                 text = stringResource(id = R.string.login),
                 isLoading = state.isLoggingIn,
-                enabled = state.canLogin,
+                enabled = state.canLogin && !state.isLoggingIn,
                 onClick = { onAction(LoginAction.OnLoginClick) }
             )
             val annotatedString = buildAnnotatedString {
@@ -158,7 +160,7 @@ private fun LoginScreen(
                             start = offset,
                             end = offset
                         ).firstOrNull()?.let {
-                            onAction(LoginAction.OnLoginClick)
+                            onAction(LoginAction.OnRegisterClick)
                         }
                     }
                 )

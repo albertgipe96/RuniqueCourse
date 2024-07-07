@@ -79,7 +79,7 @@ fun RuniqueOutlinedActionButton(
         onClick = onClick,
         enabled = enabled,
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = MaterialTheme.colorScheme.onBackground
+            contentColor = MaterialTheme.colorScheme.onBackground,
         ),
         border = BorderStroke(width = 0.5.dp, color = MaterialTheme.colorScheme.onBackground),
         shape = RoundedCornerShape(100F)

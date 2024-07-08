@@ -8,7 +8,7 @@ class RunOverviewViewModel : ViewModel() {
         when (action) {
             RunOverviewAction.OnAnalyticsClick -> TODO()
             RunOverviewAction.OnLogoutClick -> TODO()
-            RunOverviewAction.OnStartClick -> TODO()
+            RunOverviewAction.OnStartClick -> {}
         }
     }
 

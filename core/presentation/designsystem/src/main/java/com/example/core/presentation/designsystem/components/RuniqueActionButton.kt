@@ -70,7 +70,7 @@ fun RuniqueActionButton(
 fun RuniqueOutlinedActionButton(
     modifier: Modifier = Modifier,
     text: String,
-    isLoading: Boolean,
+    isLoading: Boolean = false,
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {

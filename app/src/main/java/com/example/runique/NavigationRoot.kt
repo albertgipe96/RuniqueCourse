@@ -1,15 +1,18 @@
 package com.example.runique
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navDeepLink
 import androidx.navigation.navigation
 import com.example.auth.presentation.intro.IntroScreenRoot
 import com.example.auth.presentation.login.LoginScreenRoot
 import com.example.auth.presentation.register.RegisterScreenRoot
 import com.example.run.presentation.active_run.ActiveRunScreenRoot
+import com.example.run.presentation.active_run.service.ActiveRunService
 import com.example.run.presentation.run_overview.RunOverviewScreenRoot
 
 @Composable
@@ -92,8 +95,23 @@ private fun NavGraphBuilder.runGraph(navController: NavHostController) {
                 }
             )
         }
-        composable(route = "active_run") {
-            ActiveRunScreenRoot()
+        composable(
+            route = "active_run",
+            deepLinks = listOf(
+                navDeepLink {
+                    uriPattern = "runique://active_run"
+                }
+            )
+        ) {
+            val context = LocalContext.current
+            ActiveRunScreenRoot(
+                onServiceToggle = { shouldServiceRun ->
+                    val serviceIntent = if (shouldServiceRun) {
+                        ActiveRunService.createStartIntent(context, MainActivity::class.java)
+                    } else ActiveRunService.createStopIntent(context)
+                    context.startService(serviceIntent) // For stopping the service is also the function startService(), actually this function passes an intent to the service, don't mind about the function name
+                }
+            )
         }
     }
 }

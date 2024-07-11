@@ -54,7 +54,7 @@ class RunningTracker(
                         addAll(runData.value.locations)
                         add(emptyList<LocationTimestamp>())
                     }.toList()
-                    _runData.update { it.copy(locations = newList) }
+                    _runData.update { it.copy(locations = newList) } // Needed to add correctly an empty polyline to draw it correctly without color when run is paused and user moved
                 }
             }
             .flatMapLatest { isTracking ->

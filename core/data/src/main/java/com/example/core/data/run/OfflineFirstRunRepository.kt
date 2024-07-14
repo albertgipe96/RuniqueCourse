@@ -8,6 +8,7 @@ import com.example.core.domain.run.RemoteRunDataSource
 import com.example.core.domain.run.Run
 import com.example.core.domain.run.RunId
 import com.example.core.domain.run.RunRepository
+import com.example.core.domain.run.SyncRunScheduler
 import com.example.core.domain.util.DataError
 import com.example.core.domain.util.EmptyResult
 import com.example.core.domain.util.Result
@@ -25,7 +26,8 @@ class OfflineFirstRunRepository(
     private val remoteRunDataSource: RemoteRunDataSource,
     private val applicationScope: CoroutineScope,
     private val runPendingSyncDao: RunPendingSyncDao,
-    private val sessionStorage: SessionStorage
+    private val sessionStorage: SessionStorage,
+    private val syncRunScheduler: SyncRunScheduler
 ) : RunRepository {
 
     override fun getRuns(): Flow<List<Run>> {
@@ -53,6 +55,9 @@ class OfflineFirstRunRepository(
         val remoteResult = remoteRunDataSource.postRun(run = runWithId, mapPicture = mapPictureByteArray)
         return when (remoteResult) {
             is Result.Error -> {
+                applicationScope.launch {
+                    syncRunScheduler.scheduleSync(SyncRunScheduler.SyncType.CreateRun(run = runWithId, mapPictureByteArray = mapPictureByteArray))
+                }.join()
                 Result.Success(Unit)
             }
             is Result.Success -> {
@@ -76,6 +81,12 @@ class OfflineFirstRunRepository(
         val remoteResult = applicationScope.async { // Assure that a CancellationCoroutineException will not produce an inconsistency between remote and local
             remoteRunDataSource.deleteRun(id)
         }.await()
+
+        if (remoteResult is Result.Error) {
+            applicationScope.launch {
+                syncRunScheduler.scheduleSync(SyncRunScheduler.SyncType.DeleteRun(runId = id))
+            }.join()
+        }
     }
 
     override suspend fun syncPendingRuns() {

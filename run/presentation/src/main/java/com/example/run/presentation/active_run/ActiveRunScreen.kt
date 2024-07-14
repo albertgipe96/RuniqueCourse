@@ -48,7 +48,8 @@ import java.io.ByteArrayOutputStream
 fun ActiveRunScreenRoot(
     viewModel: ActiveRunViewModel = koinViewModel(),
     onServiceToggle: (isServiceRunning: Boolean) -> Unit,
-    onFinish: () -> Unit
+    onFinish: () -> Unit,
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
     ObserveAsEvents(flow = viewModel.eventsFlow) { event ->
@@ -61,7 +62,15 @@ fun ActiveRunScreenRoot(
     ActiveRunScreen(
         state = viewModel.state,
         onServiceToggle = onServiceToggle,
-        onAction = viewModel::onAction
+        onAction = { action ->
+            when (action) {
+                ActiveRunAction.OnBackClick -> {
+                    if (!viewModel.state.hasStartedRunning) onBack()
+                }
+                else -> Unit
+            }
+            viewModel.onAction(action)
+        }
     )
 }
 

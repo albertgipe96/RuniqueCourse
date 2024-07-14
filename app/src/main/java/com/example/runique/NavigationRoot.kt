@@ -112,7 +112,10 @@ private fun NavGraphBuilder.runGraph(navController: NavHostController) {
                     context.startService(serviceIntent) // For stopping the service is also the function startService(), actually this function passes an intent to the service, don't mind about the function name
                 },
                 onFinish = {
-
+                    navController.navigateUp()
+                },
+                onBack = {
+                    navController.navigateUp()
                 }
             )
         }

@@ -1,5 +1,8 @@
 package com.example.core.data.run
 
+import com.example.core.database.dao.RunPendingSyncDao
+import com.example.core.database.mapper.toRun
+import com.example.core.domain.SessionStorage
 import com.example.core.domain.run.LocalRunDataSource
 import com.example.core.domain.run.RemoteRunDataSource
 import com.example.core.domain.run.Run
@@ -10,15 +13,19 @@ import com.example.core.domain.util.EmptyResult
 import com.example.core.domain.util.Result
 import com.example.core.domain.util.asEmptyDataResult
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class OfflineFirstRunRepository(
     private val localRunDataSource: LocalRunDataSource,
     private val remoteRunDataSource: RemoteRunDataSource,
-    private val applicationScope: CoroutineScope
+    private val applicationScope: CoroutineScope,
+    private val runPendingSyncDao: RunPendingSyncDao,
+    private val sessionStorage: SessionStorage
 ) : RunRepository {
 
     override fun getRuns(): Flow<List<Run>> {
@@ -59,9 +66,54 @@ class OfflineFirstRunRepository(
     override suspend fun deleteRun(id: RunId) {
         localRunDataSource.deleteRun(id)
 
+        // Edge case where the run is created in offline mode and then deleted in offline mode without being sync in between
+        val isPendingSync = runPendingSyncDao.getRunPendingSyncEntity(id) != null
+        if (isPendingSync) {
+            runPendingSyncDao.deleteRunPendingSyncEntity(id)
+            return
+        }
+
         val remoteResult = applicationScope.async { // Assure that a CancellationCoroutineException will not produce an inconsistency between remote and local
             remoteRunDataSource.deleteRun(id)
         }.await()
+    }
+
+    override suspend fun syncPendingRuns() {
+        withContext(Dispatchers.IO) {
+            val userId = sessionStorage.get()?.userId ?: return@withContext
+
+            val createdRuns = async { runPendingSyncDao.getAllRunPendingSyncEntities(userId) }
+            val deletedRuns = async { runPendingSyncDao.getAllDeletedRunSyncEntities(userId) }
+
+            val createJobs = createdRuns.await().map {
+                launch {
+                    val run = it.runEntity.toRun()
+                    when (remoteRunDataSource.postRun(run, it.mapPictureByteArray)) {
+                        is Result.Error -> Unit
+                        is Result.Success -> {
+                            applicationScope.launch {
+                                runPendingSyncDao.deleteRunPendingSyncEntity(it.runId)
+                            }.join()
+                        }
+                    }
+                }
+            }
+            val deletedJobs = deletedRuns.await().map {
+                launch {
+                    when (remoteRunDataSource.deleteRun(it.runId)) {
+                        is Result.Error -> Unit
+                        is Result.Success -> {
+                            applicationScope.launch {
+                                runPendingSyncDao.deleteDeletedRunSyncEntity(it.runId)
+                            }.join()
+                        }
+                    }
+                }
+            }
+
+            createJobs.forEach { it.join() }
+            deletedJobs.forEach { it.join() }
+        }
     }
 
 }

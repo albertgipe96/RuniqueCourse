@@ -112,6 +112,13 @@ class RunningTracker(
         isObservingLocation.value = false
     }
 
+    fun finishRun() { // Needed to clear the state from a singleton instance, because it will persist if not
+        stopObservingLocation()
+        setIsTracking(false)
+        _elapsedTime.value = Duration.ZERO
+        _runData.value = RunData()
+    }
+
 }
 
 private fun <T> List<List<T>>.replaceLast(replacement: List<T>): List<List<T>> {

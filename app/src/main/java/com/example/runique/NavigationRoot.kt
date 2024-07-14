@@ -110,6 +110,9 @@ private fun NavGraphBuilder.runGraph(navController: NavHostController) {
                         ActiveRunService.createStartIntent(context, MainActivity::class.java)
                     } else ActiveRunService.createStopIntent(context)
                     context.startService(serviceIntent) // For stopping the service is also the function startService(), actually this function passes an intent to the service, don't mind about the function name
+                },
+                onFinish = {
+
                 }
             )
         }
